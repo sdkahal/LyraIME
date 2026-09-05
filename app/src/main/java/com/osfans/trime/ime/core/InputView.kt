@@ -909,6 +909,7 @@ class InputView(
                 endOfParent()
                 topMargin = 0
             }
+            inputBar.view.setPadding(dp(theme.generalStyle.horizontalGap / 2), dp(theme.generalStyle.horizontalGap / 2), dp(theme.generalStyle.horizontalGap / 2), 0)
         } else {
             leftPaddingSpace.visibility = View.VISIBLE
             rightPaddingSpace.visibility = View.VISIBLE
@@ -931,6 +932,7 @@ class InputView(
                 endToStartOf(rightPaddingSpace)
                 topMargin = sidePadding
             }
+            inputBar.view.setPadding(dp(theme.generalStyle.horizontalGap / 2), dp(theme.generalStyle.horizontalGap / 2), dp(theme.generalStyle.horizontalGap / 2), 0)
         }
     }
 
