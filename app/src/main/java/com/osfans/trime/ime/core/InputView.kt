@@ -893,6 +893,7 @@ class InputView(
         }
 
         val sidePadding = keyboardSidePaddingPx
+        val horizontalGapPx = dp(theme.generalStyle.horizontalGap / 2)
         if (sidePadding == 0) {
             leftPaddingSpace.visibility = View.GONE
             rightPaddingSpace.visibility = View.GONE
@@ -907,9 +908,10 @@ class InputView(
                 endToStart = ConstraintLayout.LayoutParams.UNSET
                 startOfParent()
                 endOfParent()
-                topMargin = 0
+                topMargin = horizontalGapPx
+                marginStart = horizontalGapPx
+                marginEnd = horizontalGapPx
             }
-            inputBar.view.setPadding(dp(theme.generalStyle.horizontalGap / 2), dp(theme.generalStyle.horizontalGap / 2), dp(theme.generalStyle.horizontalGap / 2), 0)
         } else {
             leftPaddingSpace.visibility = View.VISIBLE
             rightPaddingSpace.visibility = View.VISIBLE
@@ -930,9 +932,10 @@ class InputView(
                 endToEnd = ConstraintLayout.LayoutParams.UNSET
                 startToEndOf(leftPaddingSpace)
                 endToStartOf(rightPaddingSpace)
-                topMargin = sidePadding
+                topMargin = sidePadding + horizontalGapPx
+                marginStart = horizontalGapPx
+                marginEnd = horizontalGapPx
             }
-            inputBar.view.setPadding(dp(theme.generalStyle.horizontalGap / 2), dp(theme.generalStyle.horizontalGap / 2), dp(theme.generalStyle.horizontalGap / 2), 0)
         }
     }
 
