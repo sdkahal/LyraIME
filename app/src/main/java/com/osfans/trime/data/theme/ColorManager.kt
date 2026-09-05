@@ -360,7 +360,7 @@ object ColorManager {
         alpha: Int = 255,
     ): Drawable? = when (val drawable = getDrawable(colorKey)) {
         is GradientDrawable ->
-            drawable.also {
+            drawable.mutate().also {
                 it.cornerRadius = cornerRadius
                 it.alpha = MathUtils.clamp(alpha, 0, 255)
                 if (!borderColorKey.isNullOrEmpty()) {
