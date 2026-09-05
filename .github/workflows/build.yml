@@ -7,6 +7,9 @@ name: Build
 on:
   workflow_dispatch:
 
+env:
+  CI_NAME: Build CI
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -33,6 +36,9 @@ jobs:
       - name: Compute build version name
         run: |
           echo "BUILD_VERSION_NAME=$(git describe --tags --long --always --exclude=nightly)" >> $GITHUB_ENV
+
+      - name: Init submodules
+        run: git submodule update --init --recursive
 
       - name: Calculate JNI cache hash
         id: cache-hash
