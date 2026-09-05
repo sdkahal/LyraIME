@@ -317,11 +317,14 @@ object ColorManager {
                     Color.TRANSPARENT
                 }
             val cached = gradientDrawableCache?.get(color)
-            return cached?.constantState?.newDrawable()
-                ?: GradientDrawable().apply {
-                    setColor(color)
-                    gradientDrawableCache?.put(color, this)
-                }
+            if (cached != null) {
+                return cached.constantState?.newDrawable()?.also { it.mutate() }
+            }
+            val newDrawable = GradientDrawable().apply {
+                setColor(color)
+            }
+            gradientDrawableCache?.put(color, newDrawable)
+            return newDrawable.constantState?.newDrawable()?.also { it.mutate() }
         }
     }
 
