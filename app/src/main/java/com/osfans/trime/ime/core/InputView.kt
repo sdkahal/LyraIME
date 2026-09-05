@@ -907,6 +907,7 @@ class InputView(
                 endToStart = ConstraintLayout.LayoutParams.UNSET
                 startOfParent()
                 endOfParent()
+                topMargin = 0
             }
         } else {
             leftPaddingSpace.visibility = View.VISIBLE
@@ -928,6 +929,7 @@ class InputView(
                 endToEnd = ConstraintLayout.LayoutParams.UNSET
                 startToEndOf(leftPaddingSpace)
                 endToStartOf(rightPaddingSpace)
+                topMargin = sidePadding
             }
         }
     }
