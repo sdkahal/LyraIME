@@ -902,6 +902,12 @@ class InputView(
                 startOfParent()
                 endOfParent()
             }
+            inputBar.view.updateLayoutParams<LayoutParams> {
+                startToEnd = ConstraintLayout.LayoutParams.UNSET
+                endToStart = ConstraintLayout.LayoutParams.UNSET
+                startOfParent()
+                endOfParent()
+            }
         } else {
             leftPaddingSpace.visibility = View.VISIBLE
             rightPaddingSpace.visibility = View.VISIBLE
@@ -917,8 +923,13 @@ class InputView(
                 startToEndOf(leftPaddingSpace)
                 endToStartOf(rightPaddingSpace)
             }
+            inputBar.view.updateLayoutParams<LayoutParams> {
+                startToStart = ConstraintLayout.LayoutParams.UNSET
+                endToEnd = ConstraintLayout.LayoutParams.UNSET
+                startToEndOf(leftPaddingSpace)
+                endToStartOf(rightPaddingSpace)
+            }
         }
-        inputBar.view.setPadding(sidePadding, 0, sidePadding, 0)
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {

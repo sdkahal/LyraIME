@@ -27,7 +27,7 @@ android {
 
     defaultConfig {
         applicationId = "com.carlson.lyraime"
-        minSdk = 33
+        minSdk = 30
         targetSdk = 37
         versionCode = LocalDate.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.BASIC_ISO_DATE).toInt()
         versionName = "5.5.0"
