@@ -6,6 +6,7 @@ package com.osfans.trime.ime.candidates.unrolled
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.view.ViewOutlineProvider
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.osfans.trime.R
 import com.osfans.trime.data.theme.ColorManager
@@ -52,6 +53,8 @@ class UnrolledCandidateLayout(
                 dp(theme.generalStyle.candidateBorder),
                 dp(theme.generalStyle.candidateBorderRound),
             )
+        clipToOutline = true
+        outlineProvider = ViewOutlineProvider.BACKGROUND
 
         if (navBar != null) {
             val navWidth = dp(theme.candidatesTool!!.navWidth)
