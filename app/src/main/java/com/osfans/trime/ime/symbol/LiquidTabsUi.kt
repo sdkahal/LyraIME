@@ -40,7 +40,12 @@ class LiquidTabsUi(
                     runCatching { ColorManager.getColor("hilited_candidate_back_color") }
                         .getOrDefault(Color.TRANSPARENT)
                 }
-        private val cornerRadius = ctx.dp(theme.generalStyle.roundCorner)
+        private val cornerRadius = ctx.dp(
+            if (theme.liquidKeyboard.tabRoundCorner >= 0)
+                theme.liquidKeyboard.tabRoundCorner
+            else
+                theme.generalStyle.roundCorner
+        )
 
         val text =
             textView {

@@ -26,6 +26,7 @@ data class LiquidKeyboard(
     val columns: Int = 6,
     val rows: Int = 5,
     val bottomPadding: Int? = null,
+    val tabRoundCorner: Float = -1f,
     val keyboards: List<Keyboard> = emptyList(),
 ) : Parcelable {
     @Parcelize
