@@ -43,8 +43,6 @@ class UnrolledCandidateLayout(
     init {
         id = R.id.unrolled_candidate_view
         clipChildren = false
-        val hGapHalf = context.dp(theme.generalStyle.horizontalGap / 2)
-        setPadding(hGapHalf, 0, hGapHalf, 0)
         background =
             ColorManager.getDecorDrawable(
                 "candidate_background",
