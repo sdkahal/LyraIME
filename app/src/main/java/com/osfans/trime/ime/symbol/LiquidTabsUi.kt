@@ -112,9 +112,9 @@ class LiquidTabsUi(
                     setText(item!!.label)
                     setActive(position == selected)
                     root.run {
-                        val horizontal = ctx.dp(2)
+                        val margin = ctx.dp(2)
                         layoutParams = RecyclerView.LayoutParams(matchParent, ctx.dp(35)).apply {
-                            setMargins(horizontal, 0, horizontal, 0)
+                            setMargins(margin, margin, margin, margin)
                         }
                     }
                 }
