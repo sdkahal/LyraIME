@@ -11,9 +11,12 @@ import androidx.transition.Transition
 import androidx.transition.TransitionManager
 import androidx.transition.TransitionSet
 import com.osfans.trime.R
+import com.osfans.trime.data.theme.Theme
 import com.osfans.trime.ime.broadcast.InputBroadcaster
+import com.osfans.trime.ime.candidates.unrolled.window.FlexboxUnrolledCandidateWindow
 import com.osfans.trime.ime.dependency.InputDependencyManager
 import org.kodein.di.instance
+import splitties.dimensions.dp
 import splitties.views.dsl.core.add
 import splitties.views.dsl.core.frameLayout
 import splitties.views.dsl.core.lParams
@@ -23,6 +26,7 @@ import timber.log.Timber
 class BoardWindowManager {
     private val context: Context by InputDependencyManager.getInstance().di.instance()
     private val broadcaster: InputBroadcaster by InputDependencyManager.getInstance().di.instance()
+    private val theme: Theme by InputDependencyManager.getInstance().di.instance()
 
     private val cachedResidentWindows = mutableMapOf<ResidentWindow.Key, Pair<BoardWindow, View?>>()
 
@@ -102,7 +106,14 @@ class BoardWindowManager {
         if (window is ResidentWindow) {
             window.beforeAttached()
         }
-        view.apply { add(newView, lParams(matchParent, matchParent)) }
+        view.apply {
+            val params = lParams(matchParent, matchParent)
+            if (window is FlexboxUnrolledCandidateWindow) {
+                params.marginStart = dp(theme.generalStyle.horizontalGap / 2)
+                params.marginEnd = dp(theme.generalStyle.horizontalGap / 2)
+            }
+            add(newView, params)
+        }
         currentView = newView
         Timber.d("Attach $window")
         window.onAttached()
