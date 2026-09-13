@@ -111,7 +111,6 @@ class BoardWindowManager {
             if (window is FlexboxUnrolledCandidateWindow) {
                 params.marginStart = dp(theme.generalStyle.horizontalGap / 2)
                 params.marginEnd = dp(theme.generalStyle.horizontalGap / 2)
-                params.topMargin = dp(theme.generalStyle.keyboardPaddingTop.coerceAtLeast(0))
             }
             add(newView, params)
         }
