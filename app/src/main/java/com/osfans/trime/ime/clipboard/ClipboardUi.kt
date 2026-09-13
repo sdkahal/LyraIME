@@ -59,7 +59,7 @@ class ClipboardUi(override val ctx: Context, private val theme: Theme) : Ui {
                     add(
                         button,
                         LinearLayout.LayoutParams(0, dp(30), 1f)
-                            .apply { marginEnd = dp(4) },
+                            .apply { marginHorizontal = dp(4) },
                     )
                 }
             },
