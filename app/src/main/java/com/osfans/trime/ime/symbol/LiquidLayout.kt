@@ -63,7 +63,7 @@ class LiquidLayout(
 
     val recyclerView =
         recyclerView {
-            setPadding(0, contentPaddingPx, 0, contentPaddingPx)
+            setPadding(contentPaddingPx, contentPaddingPx, contentPaddingPx, contentPaddingPx)
             addItemDecoration(
                 LiquidGridDecoration(
                     spanCount = theme.liquidKeyboard.columns,
