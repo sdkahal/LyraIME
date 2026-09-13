@@ -87,7 +87,7 @@ class LiquidLayout(
                 dp(theme.generalStyle.keyBorder),
                 dp(theme.generalStyle.roundCorner),
             )
-            tabsUi.root.setPadding(0, contentPaddingPx, 0, contentPaddingPx)
+            tabsUi.root.setPadding(contentPaddingPx, contentPaddingPx, contentPaddingPx, contentPaddingPx)
             tabsUi.root.clipToOutline = true
             tabsUi.root.outlineProvider =
                 object : ViewOutlineProvider() {
