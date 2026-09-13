@@ -35,14 +35,6 @@ class LiquidLayout(
     context: Context,
     private val theme: Theme,
 ) : LinearLayout(context) {
-    private val sideMarginPx = context.dp(
-        if (context.isLandscapeMode()) {
-            theme.generalStyle.keyboardPaddingLand
-        } else {
-            theme.generalStyle.keyboardPadding
-        },
-    )
-
     private val bottomPadding =
         theme.liquidKeyboard.bottomPadding
             ?: if (context.isLandscapeMode()) {
@@ -83,7 +75,8 @@ class LiquidLayout(
 
     init {
         orientation = HORIZONTAL
-        setPadding(sideMarginPx, context.dp(theme.generalStyle.keyboardPaddingTop.coerceAtLeast(0)), sideMarginPx, context.dp(bottomPadding.coerceAtLeast(0)))
+        val hGapHalf = context.dp(theme.generalStyle.horizontalGap / 2)
+        setPadding(hGapHalf, context.dp(theme.generalStyle.keyboardPaddingTop.coerceAtLeast(0)), hGapHalf, context.dp(bottomPadding.coerceAtLeast(0)))
 
         // 左侧栏：导航(3/5) + 锁定(1/5) + 返回(1/5)，占宽 1/5
         val leftPanel = view(::LinearLayout) {
