@@ -5,7 +5,8 @@
 
 package com.osfans.trime.ui.main
 
-import android.app.Activity
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import android.content.ClipData
 import android.os.Bundle
 import android.text.Editable
@@ -26,6 +27,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.osfans.trime.R
 import com.osfans.trime.data.db.ClipboardHelper
 import com.osfans.trime.data.db.DatabaseBean
+import com.osfans.trime.data.prefs.AppPrefs
 import com.osfans.trime.data.theme.Theme
 import com.osfans.trime.data.theme.ThemeManager
 import com.osfans.trime.databinding.ActivityClipSearchBinding
@@ -45,7 +47,7 @@ import splitties.systemservices.inputMethodManager
 import timber.log.Timber
 import kotlin.time.Duration.Companion.milliseconds
 
-class ClipSearchActivity : Activity() {
+class ClipSearchActivity : AppCompatActivity() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private lateinit var editText: EditText
     private lateinit var progressBar: ProgressBar
@@ -63,6 +65,15 @@ class ClipSearchActivity : Activity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val uiMode = AppPrefs.defaultInstance().advanced.uiMode.getValue()
+        AppCompatDelegate.setDefaultNightMode(
+            when (uiMode) {
+                AppPrefs.Advanced.UiMode.AUTO -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                AppPrefs.Advanced.UiMode.LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
+                AppPrefs.Advanced.UiMode.DARK -> AppCompatDelegate.MODE_NIGHT_YES
+                else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            },
+        )
         super.onCreate(savedInstanceState)
         window.attributes.gravity = Gravity.TOP
         val binding = ActivityClipSearchBinding.inflate(layoutInflater).apply {
