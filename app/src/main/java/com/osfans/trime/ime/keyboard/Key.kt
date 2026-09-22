@@ -380,35 +380,56 @@ class Key(
 
     fun getCode(behavior: KeyBehavior): Int = getAction(behavior)!!.code
 
-    fun getLabel(): String {
+    fun getLabel(): String = getLabelSegments().joinToString("") { it.text }
+
+    fun getLabelSegments(): List<TextKeyboard.LabelSegment> {
         // 1) Double-click on-state labels
         if (isOn && hasAction(KeyBehavior.DOUBLE_CLICK)) {
-            return keyActions[KeyBehavior.DOUBLE_CLICK]!!.getLabel(parent)
+            return keyActions[KeyBehavior.DOUBLE_CLICK]!!.getLabelSegments(parent)
         }
         if (isOn && hasAction(KeyBehavior.LAZY_DOUBLE_CLICK)) {
-            return keyActions[KeyBehavior.LAZY_DOUBLE_CLICK]!!.getLabel(parent)
+            return keyActions[KeyBehavior.LAZY_DOUBLE_CLICK]!!.getLabelSegments(parent)
         }
 
         // 2) "enter_labels" special label — always shown regardless of mode
         if (checkKeyAction() == null && label.firstOrNull()?.text == "enter_labels") {
-            return label.firstOrNull()?.text ?: ""
+            return listOf(label.first())
         }
 
-        // 3) Layout-level label: use ascii_label in ASCII mode, label otherwise
+        // 3) Layout-level label. In ASCII mode only the layout ascii_label overrides;
+        //    otherwise fall through so the action label (preset ascii_label / states / keycode
+        //    display label) is used.
         if (checkKeyAction() == null) {
             val isAscii = RimeDaemon.isAsciiMode
             if (isAscii) {
-                val alt = asciiLabel.firstOrNull()?.text?.takeIf { it.isNotEmpty() }
-                if (!alt.isNullOrEmpty()) return alt
-            } else {
-                if (label.any { it.text.isNotEmpty() }) {
-                    return label.firstOrNull()?.text ?: ""
-                }
+                if (asciiLabel.any { it.text.isNotEmpty() }) return asciiLabel
+            } else if (label.any { it.text.isNotEmpty() }) {
+                return label
             }
         }
 
-        // 4) Fallback to PresetKey label
-        return keyAction!!.getLabel(parent)
+        // 4) Action / PresetKey label
+        val actionSegments = keyAction?.getLabelSegments(parent) ?: emptyList()
+        val actionText = actionSegments.joinToString("") { it.text }
+
+        // 5) Merge layout label styling with the resolved action text, so styled placeholder
+        //    keys like `key { label = { text = "", color = "red" }, click = "Space" }` keep working
+        val layoutLabel = label
+        if (layoutLabel.isNotEmpty()) {
+            return when {
+                layoutLabel.any { it.text.isNotEmpty() } ->
+                    if (actionText.isNotEmpty() && layoutLabel.none { it.text == actionText }) {
+                        listOf(layoutLabel.first().copy(text = actionText))
+                    } else {
+                        layoutLabel
+                    }
+
+                actionText.isNotEmpty() -> layoutLabel.map { if (it.text.isEmpty()) it.copy(text = actionText) else it }
+
+                else -> emptyList()
+            }
+        }
+        return actionSegments
     }
 
     fun getPreviewText(behavior: KeyBehavior): String = when (behavior) {
@@ -418,11 +439,11 @@ class Key(
 
     val symbolLabel: List<TextKeyboard.LabelSegment>
         get() = labelSymbol.ifEmpty {
-            val labelStr = longClick?.getLabel(parent)
-                ?: keyActions[KeyBehavior.DOUBLE_CLICK]?.getLabel(parent)
-                ?: keyActions[KeyBehavior.LAZY_DOUBLE_CLICK]?.getLabel(parent)
-                ?: ""
-            if (labelStr.isNotEmpty()) listOf(TextKeyboard.LabelSegment(text = labelStr)) else emptyList()
+            val segments = longClick?.getLabelSegments(parent)
+                ?: keyActions[KeyBehavior.DOUBLE_CLICK]?.getLabelSegments(parent)
+                ?: keyActions[KeyBehavior.LAZY_DOUBLE_CLICK]?.getLabelSegments(parent)
+                ?: emptyList()
+            segments.takeIf { list -> list.any { it.text.isNotEmpty() } } ?: emptyList()
         }
 
     private val appearanceType: Int
