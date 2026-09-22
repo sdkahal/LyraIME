@@ -893,6 +893,7 @@ class InputView(
         }
 
         val sidePadding = keyboardSidePaddingPx
+        val portraitSidePadding = dp(keyboardSidePadding)
         val horizontalGapPx = dp(theme.generalStyle.horizontalGap / 2)
         if (sidePadding == 0) {
             leftPaddingSpace.visibility = View.GONE
@@ -932,7 +933,7 @@ class InputView(
                 endToEnd = ConstraintLayout.LayoutParams.UNSET
                 startToEndOf(leftPaddingSpace)
                 endToStartOf(rightPaddingSpace)
-                topMargin = sidePadding + horizontalGapPx
+                topMargin = portraitSidePadding + horizontalGapPx
                 marginStart = horizontalGapPx
                 marginEnd = horizontalGapPx
             }
