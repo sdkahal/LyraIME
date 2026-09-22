@@ -880,12 +880,13 @@ class InputView(
                 startToEndOf(leftPaddingSpace)
                 endToStartOf(rightPaddingSpace)
             }
-            inputBar.view.setPadding(
-                if (oneHandOnRight) remaining else 0,
-                0,
-                if (oneHandOnRight) 0 else remaining,
-                0,
-            )
+            inputBar.view.updateLayoutParams<LayoutParams> {
+                startToStart = ConstraintLayout.LayoutParams.UNSET
+                endToEnd = ConstraintLayout.LayoutParams.UNSET
+                startToEndOf(leftPaddingSpace)
+                endToStartOf(rightPaddingSpace)
+            }
+            inputBar.view.setPadding(0, 0, 0, 0)
             syncOneHandHandleUi()
             updateHandlePosition()
             updateOneHandGapScale()
