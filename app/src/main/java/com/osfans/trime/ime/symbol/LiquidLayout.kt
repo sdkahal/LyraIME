@@ -136,7 +136,7 @@ class LiquidLayout(
         val textColor = ColorManager.getColor("key_text_color")
         lockIcon.setImageResource(R.drawable.ic_outline_lock_open_24)
         lockIcon.imageTintList = ColorStateList.valueOf(textColor)
-        returnIcon.setImageResource(R.drawable.ic_baseline_arrow_back_24)
+        returnIcon.setImageResource(R.drawable.ic_baseline_backspace_24)
         returnIcon.imageTintList = ColorStateList.valueOf(textColor)
         setLocked(false)
     }

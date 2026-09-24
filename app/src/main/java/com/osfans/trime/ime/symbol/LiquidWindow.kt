@@ -5,6 +5,7 @@
 
 package com.osfans.trime.ime.symbol
 
+import android.view.KeyEvent
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.GridLayoutManager
@@ -108,7 +109,7 @@ class LiquidWindow :
             liquidLayout.setLocked(locked)
         }
         returnButton.setOnClickListener {
-            windowManager.attachWindow(KeyboardWindow)
+            service.sendDownUpKeyEvent(KeyEvent.KEYCODE_DEL)
         }
     }
 
