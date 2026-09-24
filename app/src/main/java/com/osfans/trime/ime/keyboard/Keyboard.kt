@@ -22,6 +22,7 @@ import splitties.systemservices.windowManager
 import timber.log.Timber
 import kotlin.math.abs
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 internal object KeyboardPending {
@@ -429,10 +430,12 @@ class Keyboard(
                     }
                     val bucket = IntArray(keyCount)
                     for (i in 0 until keyCount) {
-                        val centroid = (naturalRanges[i * 2] + naturalRanges[i * 2 + 1]) / 2f
+                        // assign by natural left edge: a key goes to the segment that ends after
+                        // its start; a start inside a hole is pushed to the following segment
+                        val start = naturalRanges[i * 2]
                         var seg = segments.indices.last
                         for (s in segments.indices) {
-                            if (centroid >= segments[s].first && centroid < segments[s].second) {
+                            if (start < segments[s].second) {
                                 seg = s
                                 break
                             }
@@ -451,17 +454,21 @@ class Keyboard(
                             }
                         }
                         if (members.isEmpty()) continue
-                        var offset = segStart
+                        // distribute members across the segment using float boundaries, rounding
+                        // each boundary so truncation errors do not accumulate leftward
+                        var acc = 0f
+                        var cur = segStart
                         for (m in members.indices) {
                             val i = members[m]
-                            val naturalW = (keyWeights[i] * keyAreaWidthPx).toInt()
-                            val w = if (m == members.lastIndex) {
-                                segEnd - offset
+                            acc += (keyWeights[i] * keyAreaWidthPx).toInt()
+                            val next = if (m == members.lastIndex) {
+                                segEnd
                             } else {
-                                (naturalW.toLong() * (segEnd - segStart) / totalNaturalWidth).toInt()
+                                (segStart + acc * (segEnd - segStart) / totalNaturalWidth).roundToInt()
                             }
-                            placeKey(i, offset, w)
-                            offset += w
+                            val w = next - cur
+                            placeKey(i, cur, w)
+                            cur = next
                         }
                     }
                 } else {
