@@ -802,6 +802,7 @@
 ---@class TextKey
 ---@field width?                      number          # 按键宽度（相对于行的比例，默认 0.0）
 ---@field spacer?                     boolean         # 是否为空白占位键
+---@field span_rows?                  integer         # 跨占行数（默认 1）；竖向合并多行，被跨行的其它按键自动避让；横屏分屏键盘下忽略
 ---@field round_corner?               number          # 圆角半径（-1 = 使用全局值）
 ---@field round_corner_top_left?      number?         # 左上角圆角半径（nil = 跟随 round_corner）
 ---@field round_corner_top_right?     number?         # 右上角圆角半径

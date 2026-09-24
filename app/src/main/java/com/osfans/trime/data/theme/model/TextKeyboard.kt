@@ -44,6 +44,7 @@ data class KeyboardRow(
             val k2 = other.keys[i]
             if (k1.width != k2.width) return false
             if (k1.spacer != k2.spacer) return false
+            if (k1.spanRows != k2.spanRows) return false
         }
         return true
     }
@@ -154,6 +155,7 @@ data class TextKeyboard(
     data class TextKey(
         val width: Float = 0f,
         val spacer: Boolean = false,
+        val spanRows: Int = 1,
         val roundCorner: Float = -1f,
         val roundedCornerTopLeft: Float? = null,
         val roundedCornerTopRight: Float? = null,
@@ -240,6 +242,7 @@ internal object TextKeySerializer : KSerializer<TextKeyboard.TextKey> {
         val map = linkedMapOf<String, kotlinx.serialization.json.JsonElement>()
         map["width"] = kotlinx.serialization.json.JsonPrimitive(value.width)
         map["spacer"] = kotlinx.serialization.json.JsonPrimitive(value.spacer)
+        map["span_rows"] = kotlinx.serialization.json.JsonPrimitive(value.spanRows)
         map["round_corner"] = kotlinx.serialization.json.JsonPrimitive(value.roundCorner)
         value.roundedCornerTopLeft?.let { map["round_corner_top_left"] = kotlinx.serialization.json.JsonPrimitive(it) }
         value.roundedCornerTopRight?.let { map["round_corner_top_right"] = kotlinx.serialization.json.JsonPrimitive(it) }
@@ -298,6 +301,7 @@ internal object TextKeySerializer : KSerializer<TextKeyboard.TextKey> {
         return TextKeyboard.TextKey(
             width = flt(obj, "width"),
             spacer = bool(obj, "spacer"),
+            spanRows = int(obj, "span_rows", 1).coerceAtLeast(1),
             roundCorner = flt(obj, "round_corner", -1f),
             roundedCornerTopLeft = fltOrNull(obj, "round_corner_top_left"),
             roundedCornerTopRight = fltOrNull(obj, "round_corner_top_right"),

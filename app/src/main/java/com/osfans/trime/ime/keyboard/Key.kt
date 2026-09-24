@@ -53,6 +53,7 @@ class Key(
     var gap = 0
     var row = 0
     var column = 0
+    var spanRows = 1
 
     var extraWidthLeft = 0
     var extraWidthRight = 0

@@ -205,7 +205,7 @@ class Keyboard(
                 key.width = (key.width * scaleX).toInt()
                 xPos = (key.x + key.width).toFloat()
             }
-            yPos += rowKeys.first().height
+            yPos += rowKeys.minOf { it.height }
         }
     }
 
@@ -289,6 +289,9 @@ class Keyboard(
 
             // ------ per-row key width distribution and Key creation ------
             val spacers = mutableListOf<Triple<Int, Int, Int>>()
+            class KeyHole(val xLeft: Int, val xRight: Int, val expireRow: Int)
+            val activeHoles = mutableListOf<KeyHole>()
+            var spanWarningShown = false
             var yPos = topMarginPx
 
             for (rowIdx in 0 until rowCount) {
@@ -349,39 +352,14 @@ class Keyboard(
 
                 var column = 0
 
-                for (i in 0 until keyCount) {
+                activeHoles.removeAll { it.expireRow < rowIdx }
+
+                fun placeKey(i: Int, xPx: Int, wPx: Int) {
                     val textKey = keys[i]
-                    val weight = keyWeights[i]
-                    rowWeightAccumulated += weight
-
-                    // process split gap
-                    if (isSplit && !splitInserted && rowWeightAccumulated > totalKeyWeight * 0.5f) {
-                        splitInserted = true
-                        val gap = (totalKeyWeight * splitRatio * oneWeightWidthPx).toInt()
-                        if (weight > 0.2f) {
-                            // large keys absorb the gap
-                        } else {
-                            if (expandKeypressArea) spacers.add(Triple(xPos, gap, rowIdx))
-                            xPos += gap
-                        }
-                    }
-
                     if (textKey.spacer) {
-                        val widthPx = (weight * keyAreaWidthPx).toInt()
-                        if (expandKeypressArea) spacers.add(Triple(xPos, widthPx, rowIdx))
-                        xPos += widthPx
+                        if (expandKeypressArea) spacers.add(Triple(xPx, wPx, rowIdx))
                         column++
-                        continue
-                    }
-
-                    var widthPx = (weight * keyAreaWidthPx).toInt()
-
-                    // apply large-key gap absorption for split
-                    if (isSplit && !splitInserted && rowWeightAccumulated > totalKeyWeight * 0.5f) {
-                        // the key that triggered the split: absorb the gap
-                        val gap = (totalKeyWeight * splitRatio * oneWeightWidthPx).toInt()
-                        widthPx += gap
-                        splitInserted = true // prevent double-insertion
+                        return
                     }
 
                     val key = Key(this, textKey)
@@ -395,24 +373,139 @@ class Keyboard(
                     key.keyPressOffsetX = firstNonZero(textKey.keyPressOffsetX, selfConfig.keyPressOffsetX, theme.generalStyle.keyPressOffsetX)
                     key.keyPressOffsetY = firstNonZero(textKey.keyPressOffsetY, selfConfig.keyPressOffsetY, theme.generalStyle.keyPressOffsetY)
 
-                    key.x = xPos
+                    key.x = xPx
                     key.y = yPos
-
-                    // correct minor rounding errors on the right edge
-                    val rightGap = abs(allowedWidth - xPos - widthPx)
-                    key.width = if (rightGap <= allowedWidth / 100) allowedWidth - xPos else widthPx
-
+                    key.width = wPx
                     key.height = currentRowHeight
+
+                    val spanRows = textKey.spanRows
+                    if (spanRows > 1) {
+                        when {
+                            isSplit -> if (!spanWarningShown) {
+                                Timber.w("Key span_rows is not supported in split keyboard mode, ignored")
+                                spanWarningShown = true
+                            }
+                            rowIdx + spanRows - 1 >= rowCount -> if (!spanWarningShown) {
+                                Timber.w("Row %d: span_rows=%d exceeds the last row, ignored", rowIdx, spanRows)
+                                spanWarningShown = true
+                            }
+                            else -> {
+                                key.height = (rowIdx until rowIdx + spanRows).sumOf { rowHeightsPx[it] }
+                                key.spanRows = spanRows
+                                activeHoles.add(KeyHole(key.x, key.x + key.width, rowIdx + spanRows - 1))
+                            }
+                        }
+                    }
+
                     key.row = rowIdx
                     key.column = column
 
                     column++
-                    xPos += key.width
 
                     mKeys.add(key)
 
-                    if (xPos > minWidth) {
-                        minWidth = xPos
+                    if (xPx + key.width > minWidth) {
+                        minWidth = xPx + key.width
+                    }
+                }
+
+                val rowHoles = activeHoles.filter { it.expireRow >= rowIdx }.sortedBy { it.xLeft }
+                if (rowHoles.isNotEmpty()) {
+                    // distribute this row's keys around the holes reserved by spanning keys above
+                    val segments = buildList {
+                        var cursor = 0
+                        for (hole in rowHoles) {
+                            if (hole.xLeft > cursor) add(cursor to hole.xLeft)
+                            cursor = maxOf(cursor, hole.xRight)
+                        }
+                        if (cursor < allowedWidth) add(cursor to allowedWidth)
+                    }
+                    val naturalRanges = IntArray(keyCount * 2)
+                    var naturalX = xPos
+                    for (i in 0 until keyCount) {
+                        naturalRanges[i * 2] = naturalX
+                        naturalX += (keyWeights[i] * keyAreaWidthPx).toInt()
+                        naturalRanges[i * 2 + 1] = naturalX
+                    }
+                    val bucket = IntArray(keyCount)
+                    for (i in 0 until keyCount) {
+                        val centroid = (naturalRanges[i * 2] + naturalRanges[i * 2 + 1]) / 2f
+                        var seg = segments.indices.last
+                        for (s in segments.indices) {
+                            if (centroid >= segments[s].first && centroid < segments[s].second) {
+                                seg = s
+                                break
+                            }
+                        }
+                        bucket[i] = seg
+                    }
+                    for (segIdx in segments.indices) {
+                        val segStart = segments[segIdx].first
+                        val segEnd = segments[segIdx].second
+                        val members = mutableListOf<Int>()
+                        var totalNaturalWidth = 0L
+                        for (i in 0 until keyCount) {
+                            if (bucket[i] == segIdx) {
+                                members.add(i)
+                                totalNaturalWidth += (keyWeights[i] * keyAreaWidthPx).toLong()
+                            }
+                        }
+                        if (members.isEmpty()) continue
+                        var offset = segStart
+                        for (m in members.indices) {
+                            val i = members[m]
+                            val naturalW = (keyWeights[i] * keyAreaWidthPx).toInt()
+                            val w = if (m == members.lastIndex) {
+                                segEnd - offset
+                            } else {
+                                (naturalW.toLong() * (segEnd - segStart) / totalNaturalWidth).toInt()
+                            }
+                            placeKey(i, offset, w)
+                            offset += w
+                        }
+                    }
+                } else {
+                    for (i in 0 until keyCount) {
+                        val textKey = keys[i]
+                        val weight = keyWeights[i]
+                        rowWeightAccumulated += weight
+
+                        // process split gap
+                        if (isSplit && !splitInserted && rowWeightAccumulated > totalKeyWeight * 0.5f) {
+                            splitInserted = true
+                            val gap = (totalKeyWeight * splitRatio * oneWeightWidthPx).toInt()
+                            if (weight > 0.2f) {
+                                // large keys absorb the gap
+                            } else {
+                                if (expandKeypressArea) spacers.add(Triple(xPos, gap, rowIdx))
+                                xPos += gap
+                            }
+                        }
+
+                        if (textKey.spacer) {
+                            val widthPx = (weight * keyAreaWidthPx).toInt()
+                            if (expandKeypressArea) spacers.add(Triple(xPos, widthPx, rowIdx))
+                            xPos += widthPx
+                            column++
+                            continue
+                        }
+
+                        var widthPx = (weight * keyAreaWidthPx).toInt()
+
+                        // apply large-key gap absorption for split
+                        if (isSplit && !splitInserted && rowWeightAccumulated > totalKeyWeight * 0.5f) {
+                            // the key that triggered the split: absorb the gap
+                            val gap = (totalKeyWeight * splitRatio * oneWeightWidthPx).toInt()
+                            widthPx += gap
+                            splitInserted = true // prevent double-insertion
+                        }
+
+                        // correct minor rounding errors on the right edge
+                        val rightGap = abs(allowedWidth - xPos - widthPx)
+                        val width = if (rightGap <= allowedWidth / 100) allowedWidth - xPos else widthPx
+
+                        placeKey(i, xPos, width)
+                        xPos += width
                     }
                 }
 
@@ -451,7 +544,7 @@ class Keyboard(
                 key.index = index
                 if (key.column == 0) key.edgeFlags = key.edgeFlags or EDGE_LEFT
                 if (key.row == 0) key.edgeFlags = key.edgeFlags or EDGE_TOP
-                if (key.row == rowCount - 1) key.edgeFlags = key.edgeFlags or EDGE_BOTTOM
+                if (key.row == rowCount - 1 || key.row + key.spanRows - 1 == rowCount - 1) key.edgeFlags = key.edgeFlags or EDGE_BOTTOM
             }
         }
     }
