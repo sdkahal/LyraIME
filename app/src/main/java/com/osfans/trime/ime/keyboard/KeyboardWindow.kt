@@ -326,13 +326,22 @@ class KeyboardWindow :
             }
         var final = dot.ifEmpty { smartMatchKeyboard() }
 
+        // 悬浮键盘恒按竖屏布局渲染：硬指向竖屏键图
+        if (KeyboardPending.isFloating) {
+            val portrait =
+                presetKeyboardIds.firstOrNull {
+                    it != final && ThemeManager.getKeyboard(it)?.landscapeKeyboard == final
+                }
+            if (portrait != null) final = portrait
+        }
+
         // 记忆最终键盘ID（排除横屏键盘）
         if (final != currentKeyboardId) {
             internalPrefs.initializeKeyboardId.setValue(final)
         }
 
         // 切换到横屏布局
-        if (service.isLandscapeMode()) {
+        if (service.isLandscapeMode() && !KeyboardPending.isFloating) {
             val landscape =
                 ThemeManager.getKeyboard(final)?.landscapeKeyboard ?: ""
             if (landscape.isNotEmpty() && presetKeyboardIds.contains(landscape)) final = landscape
@@ -395,6 +404,7 @@ class KeyboardWindow :
 
     fun refreshKeyboards(isAll: Boolean = false) {
         val id = currentKeyboardId.ifEmpty { return }
+        val target = evalKeyboard(id)
         currentKeyboardView?.onDetach()
         currentKeyboard?.lastAsciiMode = rime.run { statusCached }.isAsciiMode
         if (isAll) {
@@ -402,8 +412,9 @@ class KeyboardWindow :
             resolvedConfigCache.clear()
         } else {
             cachedKeyboards.remove(id)
+            if (target != id) cachedKeyboards.remove(target)
         }
-        attachKeyboard(id)
+        attachKeyboard(target)
     }
 
     fun invalidateAllCachedKeyColors() {

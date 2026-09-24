@@ -28,6 +28,9 @@ internal object KeyboardPending {
     var lastIsPortrait: Boolean? = null
     var containerWidth: Int = 0
     var allowedWidth: Int = 0
+
+    /** 悬浮键盘恒按竖屏布局渲染，由 InputView 在悬浮状态变化时同步。 */
+    var isFloating: Boolean = false
 }
 
 /** 從YAML中加載鍵盤配置，包含多個[按鍵][Key]。  */
@@ -115,7 +118,7 @@ class Keyboard(
             }
 
             val padding = theme.generalStyle.run {
-                if (context.isLandscapeMode()) keyboardPaddingLand else keyboardPadding
+                if (context.isLandscapeMode() && !KeyboardPending.isFloating) keyboardPaddingLand else keyboardPadding
             }
 
             val totalPadding = 2 * padding
@@ -245,7 +248,7 @@ class Keyboard(
             }
 
             val rowCount = rows.size
-            val isSplit = context.isLandscapeMode() && landscapePercent > 0
+            val isSplit = context.isLandscapeMode() && landscapePercent > 0 && !KeyboardPending.isFloating
             val splitRatio = if (isSplit) landscapePercent / 100f else 0f
 
             // ------ row height weight distribution ------
@@ -458,7 +461,7 @@ class Keyboard(
 
     private fun getKeyboardHeightFromTheme(theme: Theme): Int {
         var keyboardHeight = theme.generalStyle.keyboardHeight
-        if (context.isLandscapeMode()) {
+        if (context.isLandscapeMode() && !KeyboardPending.isFloating) {
             val keyboardHeightLand = theme.generalStyle.keyboardHeightLand
             if (keyboardHeightLand > 0) keyboardHeight = keyboardHeightLand
         }
@@ -467,7 +470,7 @@ class Keyboard(
 
     private fun getKeyboardHeightFromKeyboardConfig(textKeyboard: TextKeyboard): Int {
         var keyboardHeight = textKeyboard.keyboardHeight
-        if (context.isLandscapeMode()) {
+        if (context.isLandscapeMode() && !KeyboardPending.isFloating) {
             val keyboardHeightLand = textKeyboard.keyboardHeightLand
             if (keyboardHeightLand > 0) keyboardHeight = keyboardHeightLand
         }

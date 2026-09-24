@@ -42,6 +42,7 @@ import com.osfans.trime.ime.broadcast.InputBroadcaster
 import com.osfans.trime.ime.candidates.popup.PopupCandidatesMode
 import com.osfans.trime.ime.composition.PreeditDelegate
 import com.osfans.trime.ime.dependency.InputDependencyManager
+import com.osfans.trime.ime.keyboard.KeyboardPending
 import com.osfans.trime.ime.keyboard.KeyboardPrefs.isLandscapeMode
 import com.osfans.trime.ime.keyboard.KeyboardWindow
 import com.osfans.trime.ime.popup.PopupDelegate
@@ -150,12 +151,19 @@ class InputView(
     private val keyboardBottomPaddingPx: Int
         get() {
             val value =
-                if (context.isLandscapeMode()) keyboardBottomPaddingLandscape else keyboardBottomPadding
+                if (context.isLandscapeMode() && !isFloating) {
+                    keyboardBottomPaddingLandscape
+                } else {
+                    keyboardBottomPadding
+                }
             return dp(value)
         }
 
     var isFloating = false
-        private set
+        private set(value) {
+            field = value
+            KeyboardPending.isFloating = value
+        }
 
     private val isLandscapeOrientation: Boolean
         get() = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -239,7 +247,7 @@ class InputView(
                 return keyboard.height
             }
             var h = theme.generalStyle.keyboardHeight
-            if (context.isLandscapeMode()) {
+            if (context.isLandscapeMode() && !isFloating) {
                 val land = theme.generalStyle.keyboardHeightLand
                 if (land > 0) h = land
             }
