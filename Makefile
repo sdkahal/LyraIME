@@ -21,7 +21,7 @@ style-apply patch-apply release install translate ndk android
 all: release
 
 clean:
-	rm -rf build app/build app/.cxx/ app/src/main/jni/.native-cache
+	rm -rf build app/build app/.cxx/
 	$(GRADLEW) clean
 
 build: style-lint
@@ -51,7 +51,6 @@ patch-apply:
 	-git apply --directory=$(jniDir)/librime patches/librime-custom.patch
 	-git apply --directory=$(jniDir)/librime-plugins/librime-lua patches/librime-lua.patch
 	-git apply --directory=$(jniDir)/librime-plugins/librime-lua-deps patches/lua.patch
-	-git apply --directory=$(jniDir)/librime-plugins/librime-witogram patches/librime-witogram.patch
 
 # QNN (Qualcomm NPU) build requires QNN_SDK_ROOT environment variable:
 #   export QNN_SDK_ROOT=$(HOME)/.local/share/Android/qairt/2.48.40.260702
