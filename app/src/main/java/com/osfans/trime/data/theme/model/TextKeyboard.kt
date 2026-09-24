@@ -78,6 +78,7 @@ data class TextKeyboard(
     val keyPressOffsetY: Float = 0f,
     val importPreset: String = "",
     val navbar: Boolean = false,
+    val navbarClose: Boolean = true,
     val sidebarMode: Boolean = false,
     val sidebarLayout: String = "",
     val keyboardPaddingTop: Int = 0,
@@ -378,6 +379,7 @@ internal object TextKeyboardSerializer : KSerializer<TextKeyboard> {
         map["key_press_offset_y"] = JsonPrimitive(value.keyPressOffsetY)
         map["import_preset"] = JsonPrimitive(value.importPreset)
         map["navbar"] = JsonPrimitive(value.navbar)
+        map["navbar_close"] = JsonPrimitive(value.navbarClose)
         map["sidebar_mode"] = JsonPrimitive(value.sidebarMode)
         map["sidebar_layout"] = JsonPrimitive(value.sidebarLayout)
         map["keyboard_padding_top"] = JsonPrimitive(value.keyboardPaddingTop)
@@ -466,6 +468,7 @@ internal object TextKeyboardSerializer : KSerializer<TextKeyboard> {
             keyPressOffsetY = flt(obj, "key_press_offset_y"),
             importPreset = str(obj, "import_preset"),
             navbar = bool(obj, "navbar"),
+            navbarClose = bool(obj, "navbar_close", true),
             sidebarMode = bool(obj, "sidebar_mode"),
             sidebarLayout = str(obj, "sidebar_layout"),
             keyboardPaddingTop = int(obj, "keyboard_padding_top"),

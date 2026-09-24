@@ -886,6 +886,7 @@
 ---@field key_press_offset_y?       number         # 按下时 Y 偏移
 ---@field import_preset?            string         # 导入预设键盘 ID
 ---@field navbar?                   boolean        # 是否显示导航栏
+---@field navbar_close?             boolean        # 导航栏是否显示右侧收起键盘按钮（默认 true，仅 navbar 开启时生效）
 ---@field sidebar_mode?             boolean        # 是否启用侧栏模式（需配合 sidebar_layout）
 ---@field sidebar_layout?           SidebarLayout  # 侧栏布局（默认 "t9"）
 ---@field keyboard_padding_top?     integer        # 键盘顶部边距

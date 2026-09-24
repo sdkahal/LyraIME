@@ -31,11 +31,12 @@ class KeyboardNavBar(
         title: String,
         onCloseClick: () -> Unit,
         onBackClick: (() -> Unit)? = null,
+        showCloseButton: Boolean = true,
     ) {
         tabUi.removeExternal()
 
         tabUi.setTitle(title)
-        val navBarView = createNavBarView(onCloseClick)
+        val navBarView = createNavBarView(onCloseClick, showCloseButton)
         currentNavBarView = navBarView
         tabUi.addExternal(navBarView, true)
         tabUi.setBackButtonOnClickListener {
@@ -51,15 +52,20 @@ class KeyboardNavBar(
         onDetach()
     }
 
-    private fun createNavBarView(onCloseClick: () -> Unit): View = context.constraintLayout {
-        val closeButton = createCloseButton(onCloseClick)
-        add(
-            closeButton,
-            lParams(size, size) {
-                endOfParent()
-                centerVertically()
-            },
-        )
+    private fun createNavBarView(
+        onCloseClick: () -> Unit,
+        showCloseButton: Boolean,
+    ): View = context.constraintLayout {
+        if (showCloseButton) {
+            val closeButton = createCloseButton(onCloseClick)
+            add(
+                closeButton,
+                lParams(size, size) {
+                    endOfParent()
+                    centerVertically()
+                },
+            )
+        }
     }
 
     private fun createCloseButton(onClick: () -> Unit): ToolButton {

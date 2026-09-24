@@ -236,6 +236,7 @@ class KeyboardWindow :
                         title = config.name,
                         onCloseClick = { service.requestHideSelf(0) },
                         onBackClick = { switchKeyboard(".previous") },
+                        showCloseButton = config.navbarClose,
                     )
                 } else {
                     inputBarDelegate.navBar.detach()
@@ -564,6 +565,7 @@ class KeyboardWindow :
                 title = config.name,
                 onCloseClick = { service.requestHideSelf(0) },
                 onBackClick = { switchKeyboard(".previous") },
+                showCloseButton = config.navbarClose,
             )
         }
     }
