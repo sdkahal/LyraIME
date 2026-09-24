@@ -1010,6 +1010,10 @@ class InputView(
                             isOneHanded = false
                         }
                         popup.dismissAll()
+                        // 进入悬浮先同步重建为竖屏键图，保证悬浮高度与缩放按竖屏键盘计算
+                        if (floating) {
+                            keyboardWindow.refreshKeyboards()
+                        }
                         applyFloatingLayout()
                     }
                     keyboardWindow.currentKeyboardView?.invalidateAllKeys()

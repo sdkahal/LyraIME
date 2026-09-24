@@ -211,7 +211,6 @@ class KeyboardWindow :
         }
 
         keyboard.also {
-            _currentKeyboardHeight.tryEmit(it.keyboardHeight + view.bottomShadowExtent)
             if (it.isLock) lastLockKeyboardId = target
             dispatchCapsState(it::setShifted)
 
@@ -244,6 +243,10 @@ class KeyboardWindow :
                 add(it, lParams(matchParent, matchParent))
             }
         }
+
+        // 发射高度前须确保 currentKeyboard 与视图均已就位：
+        // 采集器（Main.immediate）会在 tryEmit 内联执行，过早发射会读到旧键盘算错悬浮缩放
+        _currentKeyboardHeight.tryEmit(keyboard.keyboardHeight + view.bottomShadowExtent)
     }
 
     private fun smartMatchKeyboard(): String {
