@@ -105,7 +105,7 @@ class InputView(
             setOnClickListener(placeholderListener)
         }
 
-    private val updateWindowViewHeightJob: Job
+    private var updateWindowViewHeightJob: Job? = null
 
     private val inputDepMgr = InputDependencyManager.initialize(this, themedContext, theme, service, rime)
     private val di = inputDepMgr.di
@@ -208,11 +208,16 @@ class InputView(
     private var lastResizeTouchX = 0f
     private var lastResizeTouchY = 0f
 
+    // 侧把手视图厚度（6dp 把 + 2×12dp 触摸延展）；窗口与位移须为此留出余量，否则把手出屏
+    private val floatingHandleTouchSpan: Int
+        get() = dp(6) + dp(12) * 2
+
     private val minFloatingWidthPx: Int
         get() = dp(180).coerceAtMost(resources.displayMetrics.widthPixels)
 
     private val maxFloatingWidthPx: Int
-        get() = resources.displayMetrics.widthPixels.coerceAtLeast(minFloatingWidthPx)
+        get() = (resources.displayMetrics.widthPixels - floatingHandleTouchSpan)
+            .coerceAtLeast(minFloatingWidthPx)
 
     private val minFloatingHeightPx: Int
         get() = dp(100).coerceAtMost(resources.displayMetrics.heightPixels)
@@ -329,6 +334,7 @@ class InputView(
                         keyboardView.translationX =
                             (floatingResizeStartTranslationX + floatingResizeStartWidth) - newWidth
                         preedit.ui.root.translationX = keyboardView.translationX
+                        clampFloatingPosition()
                         applyFloatingWidth()
                         true
                     }
@@ -716,15 +722,7 @@ class InputView(
                 )
             }
 
-        updateWindowViewHeightJob =
-            service.lifecycleScope.launch {
-                keyboardWindow.currentKeyboardHeight.collect {
-                    windowManager.view.updateLayoutParams {
-                        height = if (isEffectiveFloating) resolveFloatingHeight() else it
-                    }
-                    applyKeyboardViewScale()
-                }
-            }
+        launchHeightCollector()
 
         updateKeyboardSize()
 
@@ -950,7 +948,8 @@ class InputView(
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
         bottomPaddingSpace.updateLayoutParams<LayoutParams> {
-            bottomMargin = getNavBarBottomInset(insets)
+            // 悬浮键盘可任意移动，收起再打开重分发 insets 时不得写入导航栏底部留白
+            bottomMargin = if (isFloating) 0 else getNavBarBottomInset(insets)
         }
         return insets
     }
@@ -1103,11 +1102,30 @@ class InputView(
         }
     }
 
+    private fun launchHeightCollector() {
+        if (updateWindowViewHeightJob?.isActive == true) return
+        updateWindowViewHeightJob =
+            service.lifecycleScope.launch {
+                keyboardWindow.currentKeyboardHeight.collect {
+                    windowManager.view.updateLayoutParams {
+                        height = if (isEffectiveFloating) resolveFloatingHeight() else it
+                    }
+                    applyKeyboardViewScale()
+                }
+            }
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        // 键盘收起会 detach，重新打开时在此复活高度收集与广播接收器
+        launchHeightCollector()
+        inputDepMgr.start()
+    }
+
     override fun onDetachedFromWindow() {
         ViewCompat.setOnApplyWindowInsetsListener(this, null)
-        // cancel the notification job and clear all broadcast receivers,
-        // implies that InputView should not be attached again after detached.
-        updateWindowViewHeightJob.cancel()
+        updateWindowViewHeightJob?.cancel()
+        updateWindowViewHeightJob = null
         popup.root.removeAllViews()
         inputBar.stopAsrkbVoiceFromToolbar()
         inputDepMgr.stop()
@@ -1283,10 +1301,9 @@ class InputView(
             resolveFloatingHeight() + dp(inputBar.themedHeight) + dp(2)
         }
 
-        val handleThickness = dp(6)
         val handleLength = dp(48)
         val touchPadding = dp(12)
-        val viewThickness = handleThickness + touchPadding * 2
+        val viewThickness = floatingHandleTouchSpan
         val viewLength = handleLength + touchPadding * 2
 
         floatingLeftHandle.translationX = kX - viewThickness / 2
@@ -1368,8 +1385,10 @@ class InputView(
 
         val maxX = (containerWidth - keyboardWidth).coerceAtLeast(0)
         val maxY = (containerHeight - keyboardHeight).coerceAtLeast(0)
-        val clampedX = keyboardView.translationX.coerceIn(0f, maxX.toFloat())
-        val clampedY = keyboardView.translationY.coerceIn(0f, maxY.toFloat())
+        // 骑边的侧/底把手各留半个把手视图厚度，否则贴边时把手半截出屏无法点按
+        val half = floatingHandleTouchSpan / 2f
+        val clampedX = keyboardView.translationX.coerceIn(half, (maxX - half).coerceAtLeast(half))
+        val clampedY = keyboardView.translationY.coerceIn(0f, (maxY - half).coerceAtLeast(0f))
 
         if (clampedX != keyboardView.translationX || clampedY != keyboardView.translationY) {
             keyboardView.translationX = clampedX
