@@ -31,6 +31,13 @@ internal object KeyboardPending {
 
     /** 悬浮键盘恒按竖屏布局渲染，由 InputView 在悬浮状态变化时同步。 */
     var isFloating: Boolean = false
+
+    /** 单手键盘按自然宽度布局，由 InputView 同步。 */
+    var isOneHanded: Boolean = false
+
+    /** 宽度受窗口约束时，改用「自然宽布局 + 视图缩放」贴合窗口，而非重排键面。 */
+    val isWidthScaled: Boolean
+        get() = isFloating || isOneHanded
 }
 
 /** 從YAML中加載鍵盤配置，包含多個[按鍵][Key]。  */
@@ -113,7 +120,7 @@ class Keyboard(
         get() {
             val isPortrait = !context.resources.configuration.isLandscape()
 
-            if (KeyboardPending.containerWidth > 0 && KeyboardPending.lastIsPortrait == isPortrait) {
+            if (!KeyboardPending.isWidthScaled && KeyboardPending.containerWidth > 0 && KeyboardPending.lastIsPortrait == isPortrait) {
                 return KeyboardPending.containerWidth
             }
 

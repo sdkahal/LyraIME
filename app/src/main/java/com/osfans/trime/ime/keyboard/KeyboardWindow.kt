@@ -111,6 +111,7 @@ class KeyboardWindow :
 
     private val onKeyboardViewLayoutChangeListener =
         View.OnLayoutChangeListener { v, left, _, right, _, _, _, _, _ ->
+            if (KeyboardPending.isWidthScaled) return@OnLayoutChangeListener
             val width = right - left
             if (width > 0 && KeyboardPending.allowedWidth != width) {
                 val isPortrait = !context.resources.configuration.isLandscape()

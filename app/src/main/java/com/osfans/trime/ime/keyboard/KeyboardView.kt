@@ -196,7 +196,11 @@ class KeyboardView(
         val fullWidth = keyboard.minWidth + paddingLeft + paddingRight
 
         val measuredWidth =
-            minOf(MeasureSpec.getSize(widthMeasureSpec), fullWidth)
+            if (KeyboardPending.isWidthScaled) {
+                fullWidth
+            } else {
+                minOf(MeasureSpec.getSize(widthMeasureSpec), fullWidth)
+            }
 
         measureChildren(widthMeasureSpec, heightMeasureSpec)
         setMeasuredDimension(measuredWidth, keyboard.height + paddingTop + paddingBottom + bottomShadowExtent)

@@ -172,7 +172,10 @@ class InputView(
         get() = isFloating
 
     var isOneHanded = false
-        private set
+        private set(value) {
+            field = value
+            KeyboardPending.isOneHanded = value
+        }
 
     private var oneHandOnRight = true
 
@@ -229,6 +232,9 @@ class InputView(
             outline.setRoundRect(0, 0, width, height, radius)
         }
     }
+
+    private val floatingMarginPx: Int
+        get() = dp(2)
 
     private fun resolveFloatingWidth(): Int {
         val stored = floatingWidthPx.takeIf { it > 0 } ?: run {
@@ -572,11 +578,7 @@ class InputView(
         lastOneHandGapRefreshAt = now
         if (!isDockedOneHandMode) {
             keyboardWindow.setHorizontalGapScale(1f)
-            return
         }
-        val containerWidth = keyboardView.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
-        val scale = resolveOneHandWidth().toFloat() / containerWidth.toFloat()
-        keyboardWindow.setHorizontalGapScale(scale)
     }
 
     private fun updateOneHandHandleAppearance() {
@@ -719,14 +721,7 @@ class InputView(
                     windowManager.view.updateLayoutParams {
                         height = if (isEffectiveFloating) resolveFloatingHeight() else it
                     }
-                    if (isEffectiveFloating) {
-                        applyKeyboardViewScale()
-                    } else {
-                        keyboardWindow.currentKeyboardView?.apply {
-                            scaleY = 1f
-                            scaleX = 1f
-                        }
-                    }
+                    applyKeyboardViewScale()
                 }
             }
 
@@ -830,7 +825,7 @@ class InputView(
 
     private fun updateKeyboardSize() {
         if (isEffectiveFloating) {
-            val marginPx = dp(2)
+            val marginPx = floatingMarginPx
             val bottomPx = dp(2)
             bottomPaddingSpace.visibility = View.VISIBLE
             bottomPaddingSpace.updateLayoutParams {
@@ -851,6 +846,7 @@ class InputView(
                 endToStartOf(rightPaddingSpace)
             }
             inputBar.view.setPadding(marginPx, 0, marginPx, 0)
+            applyKeyboardViewScale()
             return
         }
 
@@ -898,6 +894,7 @@ class InputView(
             syncOneHandHandleUi()
             updateHandlePosition()
             updateOneHandGapScale()
+            applyKeyboardViewScale()
             return
         }
 
@@ -947,6 +944,7 @@ class InputView(
                 marginEnd = horizontalGapPx
             }
         }
+        applyKeyboardViewScale()
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
@@ -1190,6 +1188,7 @@ class InputView(
         keyboardView.updateLayoutParams<ConstraintLayout.LayoutParams> {
             width = resolveFloatingWidth()
         }
+        applyKeyboardViewScale()
         keyboardView.invalidateOutline()
         requestLayout()
         updateHandlePosition()
@@ -1207,15 +1206,32 @@ class InputView(
     }
 
     private fun applyKeyboardViewScale() {
-        val targetHeight = resolveFloatingHeight()
         val keyboard = runCatching { KeyboardWindow.currentKeyboard }.getOrNull()
         val kv = keyboardWindow.currentKeyboardView
-        if (keyboard != null && kv != null && targetHeight > 0) {
+        if (keyboard == null || kv == null) return
+        val layoutWidth = keyboard.minWidth + kv.paddingLeft + kv.paddingRight
+        if (isEffectiveFloating) {
+            val targetHeight = resolveFloatingHeight()
             val layoutHeight = keyboard.keyboardHeight
-            if (layoutHeight > 0) {
-                kv.scaleY = targetHeight.toFloat() / layoutHeight.toFloat()
+            if (layoutHeight > 0 && targetHeight > 0) {
+                kv.scaleY = targetHeight.toFloat() / layoutHeight
                 kv.pivotY = 0f
             }
+            if (layoutWidth > 0) {
+                kv.scaleX = (resolveFloatingWidth() - 2 * floatingMarginPx).toFloat() / layoutWidth
+                kv.pivotX = 0f
+            }
+        } else if (isDockedOneHandMode) {
+            kv.scaleY = 1f
+            if (layoutWidth > 0) {
+                val containerWidth = keyboardView.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
+                val targetWidth = resolveOneHandWidth().coerceAtMost(containerWidth)
+                kv.scaleX = targetWidth.toFloat() / layoutWidth
+                kv.pivotX = 0f
+            }
+        } else {
+            kv.scaleX = 1f
+            kv.scaleY = 1f
         }
     }
 
