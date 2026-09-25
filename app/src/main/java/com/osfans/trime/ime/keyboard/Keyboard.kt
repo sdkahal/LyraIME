@@ -124,32 +124,43 @@ class Keyboard(
                 return KeyboardPending.containerWidth
             }
 
-            val padding = theme.generalStyle.run {
-                if (context.isLandscapeMode() && !KeyboardPending.isFloating) keyboardPaddingLand else keyboardPadding
-            }
-
-            val totalPadding = 2 * padding
-
-            val safeWidth = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                val windowMetrics = context.windowManager.maximumWindowMetrics
-                val insets = windowMetrics.windowInsets.getInsetsIgnoringVisibility(
-                    WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout(),
-                )
-                val displayWidth = context.resources.displayMetrics.widthPixels
-                val windowWidth = windowMetrics.bounds.width() - insets.left - insets.right
-                if (windowWidth < displayWidth - context.dp(1)) displayWidth else windowWidth
-            } else {
-                @Suppress("DEPRECATION")
-                val size = Point()
-                @Suppress("DEPRECATION")
-                context.windowManager.defaultDisplay.getSize(size)
-                size.x
-            }
-
-            val width = safeWidth - context.dp(totalPadding)
-            KeyboardPending.allowedWidth = width
-            return width
+            return computeFallbackAllowedWidth().also { KeyboardPending.allowedWidth = it }
         }
+
+    /** 自然宽（非受窗口宽度约束时的排版宽）；[allowedWidth] 的兜底分支，纯计算无副作用 */
+    private fun computeFallbackAllowedWidth(): Int {
+        val padding = theme.generalStyle.run {
+            if (context.isLandscapeMode() && !KeyboardPending.isFloating) keyboardPaddingLand else keyboardPadding
+        }
+
+        val totalPadding = 2 * padding
+
+        val safeWidth = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val windowMetrics = context.windowManager.maximumWindowMetrics
+            val insets = windowMetrics.windowInsets.getInsetsIgnoringVisibility(
+                WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout(),
+            )
+            val displayWidth = context.resources.displayMetrics.widthPixels
+            val windowWidth = windowMetrics.bounds.width() - insets.left - insets.right
+            if (windowWidth < displayWidth - context.dp(1)) displayWidth else windowWidth
+        } else {
+            @Suppress("DEPRECATION")
+            val size = Point()
+            @Suppress("DEPRECATION")
+            context.windowManager.defaultDisplay.getSize(size)
+            size.x
+        }
+
+        return safeWidth - context.dp(totalPadding)
+    }
+
+    // 构建时捕获：实际排版宽/自然宽。悬浮按进入时窗宽重排时 <1，
+    // 令键面内容（横偏移与字号）等比回收，保持与自然宽布局一致的相对位置；
+    // 键高不随宽度变化，纵向偏移不缩。新增键面内容绘制须乘此值。
+    private val laidWidthPx = allowedWidth
+    private val naturalWidthPx = computeFallbackAllowedWidth()
+    val contentScale: Float =
+        if (naturalWidthPx > 0) laidWidthPx.toFloat() / naturalWidthPx else 1f
 
     /** Keyboard default ascii mode  */
     val asciiMode = selfConfig?.asciiMode ?: false

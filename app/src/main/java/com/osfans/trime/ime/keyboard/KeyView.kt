@@ -359,16 +359,18 @@ class KeyView(
 
         val isTop = defaultVerticalAlign == TextKeyboard.VerticalAlign.TOP
         val textColor = key.getSymbolColor()
+        // 悬浮按窗宽重排后键变窄，字号与横偏移乘排版宽比等比回收（纵向键高不变不缩）
+        val cs = keyboard.contentScale
         val textSize = sp(
             if (isTop) {
                 key.symbolTextSize.takeIf { it > 0f } ?: keyboardView.symbolTextSize
             } else {
                 key.hintTextSize.takeIf { it > 0f } ?: keyboardView.hintTextSize
             },
-        )
+        ) * cs
         val iconSize = textSize.toInt()
         val fontKey = if (isTop) "symbol_font" else "hint_font"
-        val offsetX = if (isTop) key.keySymbolOffsetX else key.keyHintOffsetX
+        val offsetX = (if (isTop) key.keySymbolOffsetX else key.keyHintOffsetX) * cs
         val offsetY = if (isTop) key.keySymbolOffsetY else key.keyHintOffsetY
 
         drawSegmentsImpl(canvas, segments, textSize, iconSize, textColor, offsetX, offsetY, defaultVerticalAlign, fontKey, symbolPaint)
@@ -377,15 +379,17 @@ class KeyView(
     private fun drawLabelSegments(canvas: Canvas, segments: List<TextKeyboard.LabelSegment>) {
         val textColor = key.getTextColor()
         val plainText = segments.joinToString("") { it.text }
+        // 同 drawSymbolSegments：横偏移与字号乘排版宽比，纵向不缩
+        val cs = keyboard.contentScale
         val textSize = sp(
             key.keyTextSize.takeIf { it > 0 }
                 ?: if (plainText.length > 1) keyboardView.keyLongTextSize else keyboardView.keyTextSize,
-        )
+        ) * cs
         val iconSize = textSize.toInt()
 
         drawSegmentsImpl(
             canvas, segments, textSize, iconSize, textColor,
-            key.keyTextOffsetX, key.keyTextOffsetY, TextKeyboard.VerticalAlign.CENTER, "key_font", textPaint,
+            key.keyTextOffsetX * cs, key.keyTextOffsetY, TextKeyboard.VerticalAlign.CENTER, "key_font", textPaint,
         )
     }
 
