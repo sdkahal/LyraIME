@@ -569,6 +569,15 @@ class KeyView(
         }
     }
 
+    /**
+     * 字号按 [Keyboard.contentScale] 缩放后，贴顶/贴底锚点的视觉中心会偏移
+     * (H原−H现)/2；用此值补偿回与停靠一致的位置。cs=1 时为 0，cs>1 时自动为负向。
+     */
+    private fun anchorDy(extent: Float): Float {
+        val cs = keyboard.contentScale
+        return extent * (1f - cs) / (2f * cs)
+    }
+
     private fun calculateTextPosition(
         lines: List<RichTextLine>,
         offsetX: Float,
@@ -584,7 +593,7 @@ class KeyView(
 
         when (mode) {
             PositionMode.TOP -> {
-                var currentY = paddingTop - fontMetrics.top + sp(offsetY)
+                var currentY = paddingTop - fontMetrics.top + sp(offsetY) + anchorDy(baseLineHeight)
                 lines.forEach { line ->
                     val height = baseLineHeight * line.maxScale
                     linePositions.add(Pair(currentY, height))
@@ -593,7 +602,7 @@ class KeyView(
             }
 
             PositionMode.BOTTOM -> {
-                var currentY = height - paddingBottom - fontMetrics.bottom + sp(offsetY)
+                var currentY = height - paddingBottom - fontMetrics.bottom + sp(offsetY) - anchorDy(baseLineHeight)
                 for (i in lines.indices.reversed()) {
                     val line = lines[i]
                     val lineHeight = baseLineHeight * line.maxScale
@@ -771,9 +780,9 @@ class KeyView(
                     val cmdName = seg.text.replace("ic@", "cmd_")
                     val halfIcon = iconSize / 2f
                     val centerY = when (effectiveValign) {
-                        TextKeyboard.VerticalAlign.TOP -> paddingTop + vRoundCornerInset + iconSize / 2f + sp(offsetY)
+                        TextKeyboard.VerticalAlign.TOP -> paddingTop + vRoundCornerInset + iconSize / 2f + sp(offsetY) + anchorDy(iconSize.toFloat())
 
-                        TextKeyboard.VerticalAlign.BOTTOM -> height - paddingBottom - vRoundCornerInset - iconSize / 2f + sp(offsetY)
+                        TextKeyboard.VerticalAlign.BOTTOM -> height - paddingBottom - vRoundCornerInset - iconSize / 2f + sp(offsetY) - anchorDy(iconSize.toFloat())
 
                         TextKeyboard.VerticalAlign.JUSTIFY -> {
                             val top = paddingTop + vRoundCornerInset
@@ -821,9 +830,9 @@ class KeyView(
                             else -> y + (baseAscent + baseDescent - sa - sd) / 2
                         }
 
-                        TextKeyboard.VerticalAlign.TOP -> paddingTop + vRoundCornerInset - sa + sp(offsetY)
+                        TextKeyboard.VerticalAlign.TOP -> paddingTop + vRoundCornerInset - sa + sp(offsetY) + anchorDy(sd - sa)
 
-                        TextKeyboard.VerticalAlign.BOTTOM -> height - paddingBottom - vRoundCornerInset - sd + sp(offsetY)
+                        TextKeyboard.VerticalAlign.BOTTOM -> height - paddingBottom - vRoundCornerInset - sd + sp(offsetY) - anchorDy(sd - sa)
 
                         TextKeyboard.VerticalAlign.JUSTIFY -> {
                             val top = paddingTop + vRoundCornerInset
