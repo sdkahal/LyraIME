@@ -528,16 +528,12 @@ class InputView(
         get() = dp(180).coerceAtMost(resources.displayMetrics.widthPixels)
 
     private val maxOneHandWidthPx: Int
-        get() = resources.displayMetrics.widthPixels.coerceAtLeast(minOneHandWidthPx)
+        get() = (resources.displayMetrics.widthPixels - 2 * keyboardSidePaddingPx - 1)
+            .coerceAtLeast(minOneHandWidthPx)
 
     private fun resolveOneHandWidth(): Int {
-        val stored = oneHandWidthPx.takeIf { it > 0 } ?: run {
-            val default = (resources.displayMetrics.widthPixels * 0.8f).toInt()
-            oneHandWidthPx = default.coerceIn(minOneHandWidthPx, maxOneHandWidthPx)
-            oneHandWidthPx
-        }
-        oneHandWidthPx = stored.coerceIn(minOneHandWidthPx, maxOneHandWidthPx)
-        return oneHandWidthPx
+        oneHandWidthPx.takeIf { it in minOneHandWidthPx..maxOneHandWidthPx }?.let { return it }
+        return (maxOneHandWidthPx * 0.8f).toInt().coerceIn(minOneHandWidthPx, maxOneHandWidthPx)
     }
 
     private fun getStoredOneHandSide(): Boolean = if (isLandscapeOrientation) {
@@ -646,6 +642,11 @@ class InputView(
         oneHandOnRight = getStoredOneHandSide()
 
         isFloating = rime.run { getRuntimeOption("_floating_keyboard") }
+        if (isFloating) {
+            // 冷启动即悬浮：先同步自然宽，后续重建才按进入时窗宽布局
+            KeyboardPending.containerWidth = resolveFloatingWidth()
+            KeyboardPending.lastIsPortrait = !isLandscapeOrientation
+        }
 
         windowManager.cacheResidentWindow(keyboardWindow, createView = true)
         windowManager.cacheResidentWindow(liquidWindow)
@@ -856,7 +857,7 @@ class InputView(
         }
 
         if (isDockedOneHandMode) {
-            val containerWidth = keyboardView.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
+            val containerWidth = resources.displayMetrics.widthPixels
             val oneHandWidth = resolveOneHandWidth().coerceAtMost(containerWidth)
             val remaining = (containerWidth - oneHandWidth).coerceAtLeast(0)
 
@@ -1008,10 +1009,15 @@ class InputView(
                             isOneHanded = false
                         }
                         popup.dismissAll()
-                        // 进入悬浮先同步重建为竖屏键图，保证悬浮高度与缩放按竖屏键盘计算
+                        // 悬浮按进入时窗宽作自然宽布局（键图仍同步为竖屏）；退出还原 docked 自然宽。
+                        // 进出都重建并发射高度，令 collector 复位 windowManager.view 的高度
                         if (floating) {
-                            keyboardWindow.refreshKeyboards()
+                            KeyboardPending.containerWidth = resolveFloatingWidth()
+                            KeyboardPending.lastIsPortrait = !isLandscapeOrientation
+                        } else {
+                            KeyboardPending.containerWidth = 0
                         }
+                        keyboardWindow.refreshKeyboards()
                         applyFloatingLayout()
                     }
                     keyboardWindow.currentKeyboardView?.invalidateAllKeys()
@@ -1067,7 +1073,9 @@ class InputView(
                 keyboardView.translationY.toInt(),
             )
             isFloating = false
+            KeyboardPending.containerWidth = 0
             applyDockedLayout()
+            keyboardWindow.refreshKeyboards()
         }
         isOneHanded = !isOneHanded
         if (isOneHanded) {
@@ -1078,6 +1086,21 @@ class InputView(
         updateKeyboardSize()
         updateOneHandGapScale(force = true)
         requestLayout()
+    }
+
+    fun onOrientationChanged() {
+        if (KeyboardPending.isFloating) {
+            // 悬浮键面宽度不随方向变化，仅重同步方向字段，保证后续重建取到进入时窗宽
+            KeyboardPending.lastIsPortrait = !isLandscapeOrientation
+            KeyboardPending.containerWidth = resolveFloatingWidth()
+        } else if (KeyboardPending.isOneHanded) {
+            KeyboardPending.lastIsPortrait = !isLandscapeOrientation
+            KeyboardPending.containerWidth = 0
+            oneHandOnRight = getStoredOneHandSide()
+            keyboardWindow.refreshKeyboards()
+            updateKeyboardSize()
+            requestLayout()
+        }
     }
 
     override fun onDetachedFromWindow() {
@@ -1224,8 +1247,7 @@ class InputView(
         } else if (isDockedOneHandMode) {
             kv.scaleY = 1f
             if (layoutWidth > 0) {
-                val containerWidth = keyboardView.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
-                val targetWidth = resolveOneHandWidth().coerceAtMost(containerWidth)
+                val targetWidth = resolveOneHandWidth().coerceAtMost(resources.displayMetrics.widthPixels)
                 kv.scaleX = targetWidth.toFloat() / layoutWidth
                 kv.pivotX = 0f
             }

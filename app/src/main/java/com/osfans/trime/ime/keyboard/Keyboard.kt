@@ -120,7 +120,7 @@ class Keyboard(
         get() {
             val isPortrait = !context.resources.configuration.isLandscape()
 
-            if (!KeyboardPending.isWidthScaled && KeyboardPending.containerWidth > 0 && KeyboardPending.lastIsPortrait == isPortrait) {
+            if ((!KeyboardPending.isWidthScaled || KeyboardPending.isFloating) && KeyboardPending.containerWidth > 0 && KeyboardPending.lastIsPortrait == isPortrait) {
                 return KeyboardPending.containerWidth
             }
 

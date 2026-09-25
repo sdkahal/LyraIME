@@ -388,6 +388,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         if (orientationChanged) {
             inputDeviceManager.reapplyWindowMode(this)
             inputView?.updateInputBarVisibility()
+            inputView?.onOrientationChanged()
             if (prefs.keyboard.autoFloatLandscape.getValue()) {
                 val isLandscape = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
                 postRimeJob { setRuntimeOption("_floating_keyboard", isLandscape) }
