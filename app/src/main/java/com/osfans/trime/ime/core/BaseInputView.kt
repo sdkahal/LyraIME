@@ -46,7 +46,6 @@ import kotlinx.coroutines.launch
 import splitties.dimensions.dp
 import splitties.views.dsl.core.withTheme
 import timber.log.Timber
-import kotlin.math.max
 
 abstract class BaseInputView(
     val service: TrimeInputMethodService,
@@ -203,9 +202,13 @@ abstract class BaseInputView(
             @SuppressLint("DiscouragedApi")
             val resId = resources.getIdentifier("navigation_bar_frame_height", "dimen", "android")
             return try {
-                resources.getDimensionPixelSize(resId)
+                resources.getDimensionPixelSize(resId).also {
+                    Timber.i("[NavInset] navBarFrameHeight resId=$resId value=$it")
+                }
             } catch (_: Resources.NotFoundException) {
-                dp(FALLBACK_NAVBAR_HEIGHT)
+                dp(FALLBACK_NAVBAR_HEIGHT).also {
+                    Timber.i("[NavInset] navBarFrameHeight resId=$resId notFound -> fallback=$it")
+                }
             }
         }
 
@@ -233,13 +236,13 @@ abstract class BaseInputView(
                 WindowInsetsCompat.Type.systemGestures()
         }
         val insetsBottom = insets.getInsets(mask).bottom
-        val frameHeight = navBarFrameHeight
-        val result = if (insetsBottom > 0) max(insetsBottom, frameHeight) else insetsBottom
+        // 00e13c51 曾把 fa4b60cf 的"insets=0 才用 frame"兜底改成 max 地板，
+        // 在 frame 高的 ROM 上碾压真实 inset：ignore 开关失效且键盘被过抬
         Timber.i(
             "[NavInset] ignore=$ignoreSystemGestureInsets navBars=$navBottom mandatory=$mandatoryBottom " +
-                "gestures=$gestureBottom maskBottom=$insetsBottom frameHeight=$frameHeight -> result=$result",
+                "gestures=$gestureBottom maskBottom=$insetsBottom frameHeight=${navBarFrameHeight} -> result=$insetsBottom",
         )
-        return result
+        return insetsBottom
     }
 
     override fun onAttachedToWindow() {
