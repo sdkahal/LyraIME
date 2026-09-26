@@ -120,7 +120,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
     @Keep
     private val recreateInputViewListener =
         PreferenceDelegate.OnChangeListener<Any> { key, value ->
-            Timber.d("[NavInset] pref changed $key=$value -> replaceInputView")
+            Timber.i("[NavInset] pref changed $key=$value -> replaceInputView")
             replaceInputView(ThemeManager.activeTheme)
         }
 

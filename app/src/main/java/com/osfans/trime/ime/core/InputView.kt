@@ -831,7 +831,7 @@ class InputView(
             bottomPaddingSpace.updateLayoutParams {
                 height = bottomPx
             }
-            Timber.d("[NavInset] updateKeyboardSize float paddingHeight=$bottomPx sideMargin=$marginPx")
+            Timber.i("[NavInset] updateKeyboardSize float paddingHeight=$bottomPx sideMargin=$marginPx")
             leftPaddingSpace.visibility = View.VISIBLE
             leftPaddingSpace.updateLayoutParams {
                 width = marginPx
@@ -868,7 +868,7 @@ class InputView(
         bottomPaddingSpace.updateLayoutParams {
             height = keyboardBottomPaddingPx
         }
-        Timber.d("[NavInset] updateKeyboardSize docked paddingHeight=$keyboardBottomPaddingPx oneHand=$isDockedOneHandMode")
+        Timber.i("[NavInset] updateKeyboardSize docked paddingHeight=$keyboardBottomPaddingPx oneHand=$isDockedOneHandMode")
 
         if (isDockedOneHandMode) {
             val containerWidth = resources.displayMetrics.widthPixels
@@ -968,7 +968,7 @@ class InputView(
             // 悬浮键盘可任意移动，收起再打开重分发 insets 时不得写入导航栏底部留白
             bottomMargin = navInset
         }
-        Timber.d("[NavInset] onApplyWindowInsets isFloating=$isFloating bottomMargin=$navInset paddingHeight=${keyboardBottomPaddingPx}")
+        Timber.i("[NavInset] onApplyWindowInsets isFloating=$isFloating bottomMargin=$navInset paddingHeight=${keyboardBottomPaddingPx}")
         return insets
     }
 

@@ -216,11 +216,11 @@ abstract class BaseInputView(
     protected fun getNavBarBottomInset(windowInsets: WindowInsets): Int {
         val customHeight = dp(customGestureInsetHeight)
         if (customHeight > 0) {
-            Timber.d("[NavInset] customHeight=$customHeight px (pref=${customGestureInsetHeight}dp) -> early return")
+            Timber.i("[NavInset] customHeight=$customHeight px (pref=${customGestureInsetHeight}dp) -> early return")
             return customHeight
         }
         if (navBarBackground != ThemePrefs.NavbarBackground.FULL) {
-            Timber.d("[NavInset] navBarBackground=$navBarBackground != FULL -> return 0")
+            Timber.i("[NavInset] navBarBackground=$navBarBackground != FULL -> return 0")
             return 0
         }
         val insets = WindowInsetsCompat.toWindowInsetsCompat(windowInsets)
@@ -235,7 +235,7 @@ abstract class BaseInputView(
         val insetsBottom = insets.getInsets(mask).bottom
         val frameHeight = navBarFrameHeight
         val result = if (insetsBottom > 0) max(insetsBottom, frameHeight) else insetsBottom
-        Timber.d(
+        Timber.i(
             "[NavInset] ignore=$ignoreSystemGestureInsets navBars=$navBottom mandatory=$mandatoryBottom " +
                 "gestures=$gestureBottom maskBottom=$insetsBottom frameHeight=$frameHeight -> result=$result",
         )
