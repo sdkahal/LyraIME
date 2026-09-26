@@ -1098,6 +1098,9 @@ class InputView(
         updateKeyboardSize()
         updateOneHandGapScale(force = true)
         requestLayout()
+        // 悬浮进入单手时 bottomMargin 已被 applyFloatingLayout 置 0，
+        // docked 分支只写 height 不写 margin 且无 insets 重分发，须手动请求恢复导航避让距离
+        requestApplyInsets()
     }
 
     fun onOrientationChanged() {
