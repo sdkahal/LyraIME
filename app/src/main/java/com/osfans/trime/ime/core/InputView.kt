@@ -844,6 +844,19 @@ class InputView(
                 startToEndOf(leftPaddingSpace)
                 endToStartOf(rightPaddingSpace)
             }
+            // 候选栏外边距来自约束+margin；悬浮分支必须显式重写，
+            // 否则会沿用创建时的 0（冷启动/换主题重建后贴边）或停靠残留值
+            val portraitSidePadding = dp(keyboardSidePadding)
+            val horizontalGapPx = dp(theme.generalStyle.horizontalGap / 2)
+            inputBar.view.updateLayoutParams<LayoutParams> {
+                startToStart = ConstraintLayout.LayoutParams.UNSET
+                endToEnd = ConstraintLayout.LayoutParams.UNSET
+                startToEndOf(leftPaddingSpace)
+                endToStartOf(rightPaddingSpace)
+                topMargin = portraitSidePadding + horizontalGapPx
+                marginStart = horizontalGapPx
+                marginEnd = horizontalGapPx
+            }
             inputBar.view.setPadding(marginPx, 0, marginPx, 0)
             applyKeyboardViewScale()
             return
