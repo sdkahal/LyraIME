@@ -70,6 +70,7 @@ import splitties.views.dsl.core.matchParent
 import splitties.views.dsl.core.view
 import splitties.views.dsl.core.wrapContent
 import splitties.views.imageDrawable
+import timber.log.Timber
 import kotlin.math.abs
 
 /**
@@ -830,6 +831,7 @@ class InputView(
             bottomPaddingSpace.updateLayoutParams {
                 height = bottomPx
             }
+            Timber.d("[NavInset] updateKeyboardSize float paddingHeight=$bottomPx sideMargin=$marginPx")
             leftPaddingSpace.visibility = View.VISIBLE
             leftPaddingSpace.updateLayoutParams {
                 width = marginPx
@@ -866,6 +868,7 @@ class InputView(
         bottomPaddingSpace.updateLayoutParams {
             height = keyboardBottomPaddingPx
         }
+        Timber.d("[NavInset] updateKeyboardSize docked paddingHeight=$keyboardBottomPaddingPx oneHand=$isDockedOneHandMode")
 
         if (isDockedOneHandMode) {
             val containerWidth = resources.displayMetrics.widthPixels
@@ -960,10 +963,12 @@ class InputView(
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
+        val navInset = if (isFloating) 0 else getNavBarBottomInset(insets)
         bottomPaddingSpace.updateLayoutParams<LayoutParams> {
             // 悬浮键盘可任意移动，收起再打开重分发 insets 时不得写入导航栏底部留白
-            bottomMargin = if (isFloating) 0 else getNavBarBottomInset(insets)
+            bottomMargin = navInset
         }
+        Timber.d("[NavInset] onApplyWindowInsets isFloating=$isFloating bottomMargin=$navInset paddingHeight=${keyboardBottomPaddingPx}")
         return insets
     }
 

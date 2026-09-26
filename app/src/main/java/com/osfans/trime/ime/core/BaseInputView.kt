@@ -45,6 +45,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import splitties.dimensions.dp
 import splitties.views.dsl.core.withTheme
+import timber.log.Timber
 import kotlin.math.max
 
 abstract class BaseInputView(
@@ -215,19 +216,30 @@ abstract class BaseInputView(
     protected fun getNavBarBottomInset(windowInsets: WindowInsets): Int {
         val customHeight = dp(customGestureInsetHeight)
         if (customHeight > 0) {
+            Timber.d("[NavInset] customHeight=$customHeight px (pref=${customGestureInsetHeight}dp) -> early return")
             return customHeight
         }
         if (navBarBackground != ThemePrefs.NavbarBackground.FULL) {
+            Timber.d("[NavInset] navBarBackground=$navBarBackground != FULL -> return 0")
             return 0
         }
         val insets = WindowInsetsCompat.toWindowInsetsCompat(windowInsets)
+        val navBottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+        val mandatoryBottom = insets.getInsets(WindowInsetsCompat.Type.mandatorySystemGestures()).bottom
+        val gestureBottom = insets.getInsets(WindowInsetsCompat.Type.systemGestures()).bottom
         var mask = WindowInsetsCompat.Type.navigationBars()
         if (!ignoreSystemGestureInsets) {
             mask = mask or WindowInsetsCompat.Type.mandatorySystemGestures() or
                 WindowInsetsCompat.Type.systemGestures()
         }
         val insetsBottom = insets.getInsets(mask).bottom
-        return if (insetsBottom > 0) max(insetsBottom, navBarFrameHeight) else insetsBottom
+        val frameHeight = navBarFrameHeight
+        val result = if (insetsBottom > 0) max(insetsBottom, frameHeight) else insetsBottom
+        Timber.d(
+            "[NavInset] ignore=$ignoreSystemGestureInsets navBars=$navBottom mandatory=$mandatoryBottom " +
+                "gestures=$gestureBottom maskBottom=$insetsBottom frameHeight=$frameHeight -> result=$result",
+        )
+        return result
     }
 
     override fun onAttachedToWindow() {
