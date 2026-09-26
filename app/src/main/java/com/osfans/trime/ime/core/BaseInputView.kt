@@ -5,8 +5,6 @@
 
 package com.osfans.trime.ime.core
 
-import android.annotation.SuppressLint
-import android.content.res.Resources
 import android.graphics.Typeface
 import android.text.TextPaint
 import android.text.TextUtils
@@ -196,17 +194,6 @@ abstract class BaseInputView(
 
     private val navBarBackground by ThemeManager.prefs.navbarBackground
 
-    private val navBarFrameHeight: Int
-        get() {
-            @SuppressLint("DiscouragedApi")
-            val resId = resources.getIdentifier("navigation_bar_frame_height", "dimen", "android")
-            return try {
-                resources.getDimensionPixelSize(resId)
-            } catch (_: Resources.NotFoundException) {
-                dp(FALLBACK_NAVBAR_HEIGHT)
-            }
-        }
-
     private val ignoreSystemGestureInsets by AppPrefs.defaultInstance().advanced.ignoreSystemGestureInsets
 
     private val customGestureInsetHeight by AppPrefs.defaultInstance().advanced.customGestureInsetHeight
@@ -254,9 +241,5 @@ abstract class BaseInputView(
     internal fun dismissCandidateActionMenu() {
         candidateActionMenu?.dismiss()
         candidateActionMenu = null
-    }
-
-    companion object {
-        private const val FALLBACK_NAVBAR_HEIGHT = 48
     }
 }
