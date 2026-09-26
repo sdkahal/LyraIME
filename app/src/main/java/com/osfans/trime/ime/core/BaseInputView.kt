@@ -45,7 +45,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import splitties.dimensions.dp
 import splitties.views.dsl.core.withTheme
-import kotlin.math.max
 
 abstract class BaseInputView(
     val service: TrimeInputMethodService,
@@ -227,7 +226,9 @@ abstract class BaseInputView(
                 WindowInsetsCompat.Type.systemGestures()
         }
         val insetsBottom = insets.getInsets(mask).bottom
-        return if (insetsBottom > 0) max(insetsBottom, navBarFrameHeight) else insetsBottom
+        // 00e13c51 曾把 fa4b60cf 的"insets=0 才用 frame"兜底改成 max 地板，
+        // 在 frame 高的 ROM 上碾压真实 inset：ignore 开关失效且键盘被过抬
+        return insetsBottom
     }
 
     override fun onAttachedToWindow() {
